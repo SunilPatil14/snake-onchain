@@ -3,7 +3,7 @@ import { ethers } from "ethers";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import contractABI from "./SnakeOnChainABI.json";
 
-const CONTRACT_ADDRESS = "0xe6270380fd9A3940637548ff343C228F35771a0D";
+const CONTRACT_ADDRESS = "0x55f4F7c7DF6E80657776bE47E2F865ae66377533";
 
 type Point = { x: number; y: number };
 type Direction = { x: number; y: number };

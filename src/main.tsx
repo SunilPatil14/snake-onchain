@@ -1,26 +1,18 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.tsx";
+import App from "./App";
 import "./index.css";
 
-// 🦄 Wagmi + RainbowKit Imports
+// RainbowKit + Wagmi
 import "@rainbow-me/rainbowkit/styles.css";
-import {
-  getDefaultConfig,
-  RainbowKitProvider,
-} from "@rainbow-me/rainbowkit";
-import {
-  WagmiProvider,
-  http,
-  createConfig,
-} from "wagmi";
+import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { WagmiProvider, http } from "wagmi";
 import { base, mainnet, sepolia } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-// 🧠 RainbowKit Wallet Connect Setup
 const config = getDefaultConfig({
   appName: "Snake Onchain",
-  projectId: "c37202074717747dcc0c72eb5d9e52a5", // 👉 get free at https://cloud.walletconnect.com
+  projectId: "c37202074717747dcc0c72eb5d9e52a5",
   chains: [base, mainnet, sepolia],
   transports: {
     [base.id]: http(),

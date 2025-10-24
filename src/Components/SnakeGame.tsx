@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { ethers } from "ethers";
 import contractABI from "../SnakeOnChainABI.json";
 
-const CONTRACT_ADDRESS = "0xB62A494B9488ec26a41b85Ae1E3b390443846862";
+const CONTRACT_ADDRESS = "0x20774e567dC27039bb95aa4289A1636cA008Edad";
 
 type Point = { x: number; y: number };
 type Direction = { x: number; y: number };
@@ -180,32 +180,39 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ setOnChainScore, setTxHash, setSt
     };
   }, []);
 
-  // ✅ Submit score to Base chain
-  const submitOnChain = async () => {
-    try {
-      if (!(window as any).ethereum) {
-        setStatus("⚠️ No wallet found.");
-        return;
-      }
-      const provider = new ethers.BrowserProvider((window as any).ethereum);
-      const signer = await provider.getSigner();
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
-
-      setStatus("⏳ Sending transaction...");
-      const tx = await contract.submitScore(score, { gasLimit: 100000 });
-      await tx.wait();
-
-      setTxHash(tx.hash);
-      setStatus("✅ Score submitted successfully!");
-
-      const [highScore] = await contract.getMyScore();
-      setOnChainScore(Number(highScore));
-    } catch (err: any) {
-      if (err?.code === 4001) setStatus("❌ User rejected");
-      else setStatus("❌ Transaction failed");
-      console.error(err);
+ // ✅ Submit score to Base chain
+const submitOnChain = async () => {
+  try {
+    if (!(window as any).ethereum) {
+      setStatus("⚠️ No wallet found.");
+      return;
     }
-  };
+    const provider = new ethers.BrowserProvider((window as any).ethereum);
+    const signer = await provider.getSigner();
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
+
+    setStatus("⏳ Sending transaction...");
+
+    // ✅ FIXED: Send required fee of 0.0001 ETH
+    const tx = await contract.submitScore(score, {
+      value: ethers.parseEther("0.00001"),
+      gasLimit: 100000,
+    });
+
+    await tx.wait();
+
+    setTxHash(tx.hash);
+    setStatus("✅ Score submitted successfully!");
+
+    const [highScore] = await contract.getMyScore();
+    setOnChainScore(Number(highScore));
+  } catch (err: any) {
+    if (err?.code === 4001) setStatus("❌ User rejected");
+    else setStatus("❌ Transaction failed");
+    console.error(err);
+  }
+};
+
 
   return (
     <div className="flex flex-col items-center justify-center w-full min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-4">
@@ -236,12 +243,31 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ setOnChainScore, setTxHash, setSt
         🧮 Score: {score}
       </div>
 
-      <button
-        onClick={submitOnChain}
-        className="w-[90vw] max-w-[600px] mt-4 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm shadow-md transition-transform transform hover:scale-105"
-      >
-        Submit On-chain
-      </button>
+      <div className="flex flex-col items-center w-full">
+  <button
+    onClick={submitOnChain}
+    className="w-[90vw] max-w-[600px] mt-4 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm shadow-md transition-transform transform hover:scale-105"
+  >
+    Submit On-chain
+  </button>
+
+  {/* ✅ Status Message */}
+  {/** Only show when status is not empty */}
+  {status && (
+    <p
+      className={`mt-2 text-sm font-semibold ${
+        status.includes("✅")
+          ? "text-green-400"
+          : status.includes("❌")
+          ? "text-red-400"
+          : "text-yellow-400"
+      }`}
+    >
+      Status: {status}
+    </p>
+  )}
+</div>
+
     </div>
   );
 };

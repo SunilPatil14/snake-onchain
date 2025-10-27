@@ -9,7 +9,12 @@ interface LeaderboardEntry {
   score: number;
 }
 
-const Leaderboard: React.FC = () => {
+// ✅ Accept txHash as a prop
+interface LeaderboardProps {
+  txHash: string | null;
+}
+
+const Leaderboard: React.FC<LeaderboardProps> = ({ txHash }) => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -19,15 +24,15 @@ const Leaderboard: React.FC = () => {
       const provider = new ethers.BrowserProvider((window as any).ethereum);
       const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, provider);
 
-      // Fetch data from contract
       const [addresses, scores] = await contract.getLeaderboard();
 
+      // ✅ Explicitly type 'a' and 'b' in .sort()
       const formatted: LeaderboardEntry[] = addresses
         .map((addr: string, i: number) => ({
           address: addr,
           score: Number(scores[i]),
         }))
-        .sort((a, b) => b.score - a.score);
+        .sort((a: LeaderboardEntry, b: LeaderboardEntry) => b.score - a.score);
 
       setLeaderboard(formatted);
     } catch (err) {
@@ -44,27 +49,30 @@ const Leaderboard: React.FC = () => {
     const provider = new ethers.BrowserProvider((window as any).ethereum);
     const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, provider);
 
-    // Listen for on-chain event
     const handleScoreSubmitted = (player: string, score: number) => {
       console.log(`New score from ${player}: ${score}`);
       loadLeaderboard();
     };
 
     contract.on("ScoreSubmitted", handleScoreSubmitted);
-
     return () => {
       contract.off("ScoreSubmitted", handleScoreSubmitted);
     };
   }, []);
+
+  // ✅ Reload leaderboard when txHash changes
+  useEffect(() => {
+    if (txHash) {
+      loadLeaderboard();
+    }
+  }, [txHash]);
 
   return (
     <div className="bg-gradient-to-tr from-green-900 to-green-700 rounded-2xl shadow-lg p-6 w-full max-w-md mx-auto text-white">
       <h2 className="font-bold text-xl mb-4 text-center">🏆 Leaderboard (Top 100)</h2>
 
       {loading ? (
-        <p className="text-sm text-gray-300 text-center animate-pulse">
-          Loading...
-        </p>
+        <p className="text-sm text-gray-300 text-center animate-pulse">Loading...</p>
       ) : leaderboard.length === 0 ? (
         <p className="text-sm text-gray-300 text-center">No players yet.</p>
       ) : (

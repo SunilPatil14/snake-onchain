@@ -1,11 +1,12 @@
 import React from "react";
-import type { MiniAppConfig } from "./types";
 
-/**
- * Temporary mock MiniKitProvider
- * This acts as a placeholder until the official @base-org/minikit package is published.
- * You can safely use it for Base Mini App compatibility and swap later.
- */
+export interface MiniAppConfig {
+  name: string;
+  description: string;
+  url: string;
+  iconUrl?: string;
+}
+
 export function MiniKitProvider({
   config,
   children,
@@ -13,9 +14,7 @@ export function MiniKitProvider({
   config: MiniAppConfig;
   children: React.ReactNode;
 }) {
-  // You can add custom logic or debug logging here if needed.
-  console.log("MiniKit mock initialized with config:", config);
-
-  // Just render children for now
+  // This is a placeholder wrapper for the Base MiniKit SDK
+  // Once the SDK is published, you can replace this with the actual provider
   return <>{children}</>;
 }

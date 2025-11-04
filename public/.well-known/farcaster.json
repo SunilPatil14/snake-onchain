@@ -10,8 +10,8 @@
   "miniapp": {
     "version": "1",
     "name": "Snake On-Chain",
-    "subtitle": "Classic Snake, now fully on-chain!",
-    "description": "Play the classic Snake game, but every score is submitted on-chain. Send 0.00001 ETH to record your high score and climb the leaderboard!",
+    "subtitle": "Classic Snake on chain",
+    "description": "Play the classic Snake game built on Base. Submit your score on chain and climb the leaderboard.",
             "homeUrl": "https://snake-onchain.vercel.app",
             "iconUrl": "https://snake-onchain.vercel.app/snake-logo.png",
             "splashImageUrl": "https://snake-onchain.vercel.app/splash.png",
@@ -21,10 +21,10 @@
             "https://snake-onchain.vercel.app/screenshot.png"
     ],
     "heroImageUrl": "https://snake-onchain.vercel.app/hero.png",
-    "primaryCategory": "gaming",
+    "primaryCategory": "games",
     "tags": ["game", "onchain", "snake", "base", "miniapp"],
     "tagline": "Play. Score. Submit. On-Chain.",
-    "ogTitle": "🐍 Snake On-Chain",
+    "ogTitle": "Snake On-Chain",
     "ogDescription": "The timeless Snake game meets Ethereum. Submit your score to the blockchain!",
     "ogImageUrl": "https://snake-onchain.vercel.app/hero.png",
     "noindex": false

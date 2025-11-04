@@ -13,9 +13,15 @@ const App: React.FC = () => {
   useEffect(() => {
     async function init() {
       try {
-        sdk.actions.ready(); // Notify Base app your mini app is ready
+        // Check if the SDK exists (only available inside Base app / MiniApp environment)
+        if (sdk && sdk.actions) {
+          await sdk.actions.ready(); // Notify Base app your mini app is ready
+          console.log("✅ Base MiniApp SDK: Ready called successfully");
+        } else {
+          console.log("⚠️ Base MiniApp SDK not detected — running in browser mode");
+        }
       } catch (error) {
-        console.warn("MiniApp SDK not detected or failed to initialize:", error);
+        console.warn("⚠️ MiniApp SDK initialization failed:", error);
       }
     }
     init();

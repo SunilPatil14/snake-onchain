@@ -2,29 +2,34 @@ import React, { useState, useEffect } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import SnakeGame from "./Components/SnakeGame";
 import Leaderboard from "./Components/Leaderboard";
-import { sdk } from "@farcaster/miniapp-sdk"; // Base MiniApp SDK
+import { sdk } from "@farcaster/miniapp-sdk"; // ✅ Base MiniApp SDK
 
 const App: React.FC = () => {
   const [txHash, setTxHash] = useState<string | null>(null);
   const [onChainScore, setOnChainScore] = useState<number | null>(null);
   const [status, setStatus] = useState<string>("");
+  const [isReady, setIsReady] = useState<boolean>(false); // for debug indicator
 
-  // 🧩 Initialize Base MiniApp SDK
+  // ✅ Initialize Base MiniApp SDK
   useEffect(() => {
-    async function init() {
+    const initMiniApp = async () => {
       try {
-        // Check if the SDK exists (only available inside Base app / MiniApp environment)
-        if (sdk && sdk.actions) {
-          await sdk.actions.ready(); // Notify Base app your mini app is ready
-          console.log("✅ Base MiniApp SDK: Ready called successfully");
+        // Detect whether running in Base MiniApp / Farcaster frame
+        const baseSdk = (window as any).base || sdk;
+
+        if (baseSdk?.actions?.ready) {
+          await baseSdk.actions.ready(); // Signal app is ready
+          setIsReady(true);
+          console.log("✅ MiniApp Ready called successfully");
         } else {
           console.log("⚠️ Base MiniApp SDK not detected — running in browser mode");
         }
       } catch (error) {
-        console.warn("⚠️ MiniApp SDK initialization failed:", error);
+        console.error("❌ MiniApp SDK initialization failed:", error);
       }
-    }
-    init();
+    };
+
+    initMiniApp();
   }, []);
 
   return (
@@ -35,6 +40,7 @@ const App: React.FC = () => {
           <h1 className="text-4xl font-extrabold bg-gradient-to-r from-blue-400 to-green-400 text-transparent bg-clip-text drop-shadow-lg">
             🐍 Snake On-Chain
           </h1>
+
           <ConnectButton
             chainStatus="icon"
             accountStatus={{ smallScreen: "avatar", largeScreen: "full" }}
@@ -58,6 +64,11 @@ const App: React.FC = () => {
             On-chain High Score: {onChainScore}
           </div>
         )}
+
+        {/* MiniApp Debug Status */}
+        <div className="mt-4 text-xs text-gray-400">
+          {isReady ? "✅ MiniApp Ready" : "⚙️ Initializing MiniApp..."}
+        </div>
       </div>
     </div>
   );

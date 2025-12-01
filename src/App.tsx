@@ -2,59 +2,67 @@ import React, { useState, useEffect } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import SnakeGame from "./Components/SnakeGame";
 import Leaderboard from "./Components/Leaderboard";
-import { sdk } from "@farcaster/miniapp-sdk";
 
 const App: React.FC = () => {
   const [txHash, setTxHash] = useState<string | null>(null);
   const [onChainScore, setOnChainScore] = useState<number | null>(null);
   const [status, setStatus] = useState<string>("");
-  const [isSDKReady, setIsSDKReady] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string[]>([]);
+
+  const addDebug = (msg: string) => {
+    console.log(msg);
+    setDebugInfo(prev => [...prev, msg]);
+  };
 
   useEffect(() => {
     const initSDK = async () => {
+      addDebug("1️⃣ Starting SDK initialization...");
+      
       try {
-        // Check if SDK is available
-        if (!sdk) {
-          console.error("SDK not available");
-          return;
+        // Dynamic import to ensure SDK is available
+        const { sdk } = await import("@farcaster/miniapp-sdk");
+        addDebug("2️⃣ SDK imported successfully");
+        
+        // Check if we're in a miniapp context
+        if (typeof window !== 'undefined') {
+          addDebug(`3️⃣ Window object exists`);
+          addDebug(`4️⃣ SDK object: ${sdk ? 'Available' : 'Not available'}`);
         }
 
-        // Get context to verify SDK is working
-        const context = sdk.context;
-        console.log("✅ SDK Context:", context);
+        // Log context before calling ready
+        try {
+          const context = sdk.context;
+          addDebug(`5️⃣ SDK Context: ${JSON.stringify(context)}`);
+        } catch (e) {
+          addDebug(`5️⃣ Could not get context: ${e}`);
+        }
 
-        // Call ready ONLY after your app components are loaded
-        // This should be called when your app is actually ready to display
-        await sdk.actions.ready({ disableNativeGestures: false });
-        console.log("✅ SDK ready called successfully");
-        setIsSDKReady(true);
-      } catch (error) {
-        console.error("❌ SDK initialization error:", error);
-        // Even if SDK fails, allow app to work for non-miniapp environments
-        setIsSDKReady(true);
+        // Call ready() - THE CRITICAL STEP
+        addDebug("6️⃣ Calling sdk.actions.ready()...");
+        await sdk.actions.ready();
+        addDebug("7️⃣ ✅ sdk.actions.ready() completed!");
+
+      } catch (error: any) {
+        addDebug(`❌ ERROR: ${error?.message || error}`);
+        console.error("Full error:", error);
       }
     };
 
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      initSDK();
-    }, 100);
-
-    return () => clearTimeout(timer);
+    // Call immediately
+    initSDK();
   }, []);
-
-  // Don't render content until SDK is ready
-  if (!isSDKReady) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-6xl space-y-6">
+      {/* Debug Panel - Remove this after fixing */}
+      <div className="fixed top-0 left-0 right-0 bg-black/90 text-xs text-green-400 p-2 max-h-32 overflow-y-auto z-50 font-mono">
+        <div className="font-bold mb-1">🐛 DEBUG LOG:</div>
+        {debugInfo.map((msg, i) => (
+          <div key={i}>{msg}</div>
+        ))}
+      </div>
+
+      <div className="w-full max-w-6xl space-y-6 mt-36">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <h1 className="text-4xl font-extrabold bg-gradient-to-r from-blue-400 to-green-400 text-transparent bg-clip-text drop-shadow-lg">

@@ -8,7 +8,7 @@ const App: React.FC = () => {
   const [txHash, setTxHash] = useState<string | null>(null);
   const [onChainScore, setOnChainScore] = useState<number | null>(null);
   const [status, setStatus] = useState<string>("");
-  
+
   // Use ref to ensure ready() is only called once
   const readyCalledRef = useRef(false);
 
@@ -21,12 +21,12 @@ const App: React.FC = () => {
     const initSDK = async () => {
       try {
         readyCalledRef.current = true;
-        
+
         console.log("🚀 Calling sdk.actions.ready()...");
-        
+
         // Call ready immediately
         await sdk.actions.ready();
-        
+
         console.log("✅ SDK ready() called successfully!");
         console.log("SDK Context:", sdk.context);
       } catch (error) {
@@ -47,7 +47,6 @@ const App: React.FC = () => {
           <h1 className="text-4xl font-extrabold bg-gradient-to-r from-blue-400 to-green-400 text-transparent bg-clip-text drop-shadow-lg">
             🐍 Snake On-Chain
           </h1>
-          
 
           <ConnectButton
             chainStatus="icon"
@@ -57,32 +56,27 @@ const App: React.FC = () => {
 
         {/* Game + Leaderboard */}
         <div>
-             {/* Status + Score */}
-       {status && (
-  <div className="text-sm text-gray-300 mt-2 text-center w-full">
-    Status: {status}
-  </div>
-)}
+          {/* Status + Score */}
+          {status && (
+            <div className="text-sm text-gray-300 mt-2 text-center w-full">
+              Status: {status}
+            </div>
+          )}
 
-        {onChainScore !== null && (
-          <div className="text-sm text-green-400 mt-1">
-            On-chain High Score: {onChainScore}
+          {onChainScore !== null && (
+            <div className="text-sm text-green-400 mt-1">
+              On-chain High Score: {onChainScore}
+            </div>
+          )}
+          <div className="flex flex-col md:flex-row gap-6 justify-center items-start">
+            <SnakeGame
+              setOnChainScore={setOnChainScore}
+              setTxHash={setTxHash}
+              setStatus={setStatus}
+            />
+            <Leaderboard txHash={txHash} />
           </div>
-        )}
-        <div className="flex flex-col md:flex-row gap-6 justify-center items-start">
-          
-          <SnakeGame
-          
-            setOnChainScore={setOnChainScore}
-            setTxHash={setTxHash}
-            setStatus={setStatus}
-          />
-          <Leaderboard txHash={txHash} />
         </div>
-        </div>
-        
-
-       
       </div>
     </div>
   );

@@ -6,27 +6,26 @@
     <title>Snake On-Chain</title>
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
 
-    <!-- ✅ Farcaster MiniApp Metadata -->
-    <meta
-      name="fc:miniapp"
-      content='{
-        "version": "next",
-        "imageUrl": "https://snake-onchain.vercel.app/hero.png",
-        "button": {
-          "title": "Play Now",
-          "action": {
-            "type": "launch_frame",
-            "url": "https://snake-onchain.vercel.app"
-          }
-        }
-      }'
-    />
+    <!-- ✅ Farcaster Frame Metadata (for backward compatibility) -->
+    <meta property="fc:frame" content="vNext" />
+    <meta property="fc:frame:image" content="https://snake-onchain.vercel.app/hero.png" />
+    <meta property="fc:frame:button:1" content="Play Now" />
+    <meta property="fc:frame:button:1:action" content="launch_frame" />
+    <meta property="fc:frame:button:1:target" content="https://snake-onchain.vercel.app" />
+    <meta property="fc:frame:post_url" content="https://snake-onchain.vercel.app/" />
 
-    <!-- ✅ Farcaster Frame Metadata (optional, for extra embedding support) -->
-    <meta name="fc:frame" content="vNext" />
-    <meta name="fc:frame:image" content="https://snake-onchain.vercel.app/hero.png" />
-    <meta name="fc:frame:button:1" content="Play Now" />
-    <meta name="fc:frame:post_url" content="https://snake-onchain.vercel.app/" />
+    <!-- Open Graph Meta Tags (for general sharing) -->
+    <meta property="og:title" content="Snake On-Chain" />
+    <meta property="og:description" content="Play the classic Snake game and submit your score on-chain!" />
+    <meta property="og:image" content="https://snake-onchain.vercel.app/hero.png" />
+    <meta property="og:url" content="https://snake-onchain.vercel.app" />
+    <meta property="og:type" content="website" />
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Snake On-Chain" />
+    <meta name="twitter:description" content="Play the classic Snake game and submit your score on-chain!" />
+    <meta name="twitter:image" content="https://snake-onchain.vercel.app/hero.png" />
   </head>
 
   <body>

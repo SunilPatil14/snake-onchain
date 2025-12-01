@@ -1,4 +1,4 @@
-import React, { useState , useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import SnakeGame from "./Components/SnakeGame";
 import Leaderboard from "./Components/Leaderboard";
@@ -8,21 +8,49 @@ const App: React.FC = () => {
   const [txHash, setTxHash] = useState<string | null>(null);
   const [onChainScore, setOnChainScore] = useState<number | null>(null);
   const [status, setStatus] = useState<string>("");
-  
+  const [isSDKReady, setIsSDKReady] = useState(false);
 
   useEffect(() => {
-  const initSDK = async () => {
-    try {
-      await sdk.actions.ready();
-      console.log("✅ SDK ready called");
-    } catch (error) {
-      console.error("SDK ready error:", error);
-    }
-  };
-  
-  initSDK();
-}, []);
+    const initSDK = async () => {
+      try {
+        // Check if SDK is available
+        if (!sdk) {
+          console.error("SDK not available");
+          return;
+        }
 
+        // Get context to verify SDK is working
+        const context = sdk.context;
+        console.log("✅ SDK Context:", context);
+
+        // Call ready ONLY after your app components are loaded
+        // This should be called when your app is actually ready to display
+        await sdk.actions.ready({ disableNativeGestures: false });
+        console.log("✅ SDK ready called successfully");
+        setIsSDKReady(true);
+      } catch (error) {
+        console.error("❌ SDK initialization error:", error);
+        // Even if SDK fails, allow app to work for non-miniapp environments
+        setIsSDKReady(true);
+      }
+    };
+
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      initSDK();
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Don't render content until SDK is ready
+  if (!isSDKReady) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex flex-col items-center justify-center p-4">
@@ -56,8 +84,6 @@ const App: React.FC = () => {
             On-chain High Score: {onChainScore}
           </div>
         )}
-
-      
       </div>
     </div>
   );

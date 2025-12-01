@@ -7,11 +7,15 @@
   "miniapp": {
     "version": "1",
     "name": "Snake On-Chain",
+    "subtitle": "Classic Snake meets Web3",
+    "description": "Play the classic Snake game and submit your high score on-chain. Compete on the global leaderboard!",
     "iconUrl": "https://snake-onchain.vercel.app/snake-logo.png",
     "homeUrl": "https://snake-onchain.vercel.app",
     "imageUrl": "https://snake-onchain.vercel.app/hero.png",
     "buttonTitle": "Play Now",
     "splashImageUrl": "https://snake-onchain.vercel.app/splash.png",
-    "splashBackgroundColor": "#000000"
+    "splashBackgroundColor": "#000000",
+    "primaryCategory": "game",
+    "tags": ["game", "arcade", "snake", "blockchain", "leaderboard"]
   }
 }

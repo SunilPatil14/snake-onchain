@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import BaseMiniKitProvider from "./base-minikit"; // ✅ fixed path (should be relative to `src`, not one level up)
+
 
 // RainbowKit + Wagmi
 import "@rainbow-me/rainbowkit/styles.css";
@@ -30,9 +30,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
-          <BaseMiniKitProvider>
             <App />
-          </BaseMiniKitProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

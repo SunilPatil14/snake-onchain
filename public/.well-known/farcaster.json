@@ -15,7 +15,7 @@
     "buttonTitle": "Play Now",
     "splashImageUrl": "https://snake-onchain.vercel.app/splash.png",
     "splashBackgroundColor": "#000000",
-    "primaryCategory": "game",
+    "primaryCategory": "games",
     "tags": ["game", "arcade", "snake", "blockchain", "leaderboard"]
   }
 }

@@ -13,7 +13,6 @@ interface SnakeGameProps {
   setStatus: React.Dispatch<React.SetStateAction<string>>;
 }
 
-// ✅ Global type for Ethereum
 declare global {
   interface Window {
     ethereum?: any;
@@ -37,7 +36,6 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
   const [cols, setCols] = useState(20);
   const [rows, setRows] = useState(20);
 
-  // 🧮 Responsive grid setup
   useEffect(() => {
     const resize = () => {
       const cw = Math.floor(window.innerWidth * 0.6);
@@ -50,7 +48,6 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
     return () => window.removeEventListener("resize", resize);
   }, [cellSize]);
 
-  // 🍏 Random tablet spawn
   const spawnTablet = (snakeArr: Point[]): Point => {
     const occupied = new Set(snakeArr.map((p) => `${p.x},${p.y}`));
     for (let i = 0; i < 500; i++) {
@@ -61,7 +58,6 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
     return { x: 0, y: 0 };
   };
 
-  // 🔁 Reset game
   const resetGame = () => {
     const midX = Math.floor(cols / 2);
     const midY = Math.floor(rows / 2);
@@ -80,7 +76,6 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
     setStatus("");
   };
 
-  // 🐍 Snake logic
   const updateSnake = () => {
     if (!running || snake.length === 0) return;
     const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
@@ -104,14 +99,12 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
     setSnake(newSnake);
   };
 
-  // ⏳ Game loop
   useEffect(() => {
     if (!running) return;
     const id = setTimeout(updateSnake, moveDelay);
     return () => clearTimeout(id);
   }, [snake, dir, running, moveDelay, tablet]);
 
-  // 🎨 Canvas drawing
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -123,11 +116,9 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
     canvas.width = width;
     canvas.height = height;
 
-    // Background
     ctx.fillStyle = "#0f172a";
     ctx.fillRect(0, 0, width, height);
 
-    // Tablet
     if (tablet) {
       ctx.fillStyle = "#10b981";
       ctx.fillRect(
@@ -138,7 +129,6 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
       );
     }
 
-    // Snake
     snake.forEach((s, i) => {
       ctx.fillStyle = i === 0 ? "#60a5fa" : "#3b82f6";
       ctx.fillRect(
@@ -150,7 +140,6 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
     });
   }, [snake, tablet, cols, rows, cellSize]);
 
-  // ⌨️ Keyboard controls
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!running) return;
@@ -176,12 +165,10 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
     return () => window.removeEventListener("keydown", onKey);
   }, [running]);
 
-  // 📱 Touch controls
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    let startX = 0,
-      startY = 0;
+    let startX = 0, startY = 0;
 
     const handleStart = (e: TouchEvent) => {
       const t = e.touches[0];
@@ -207,41 +194,100 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
     };
   }, []);
 
-  // 🔗 Submit score on-chain
   const submitOnChain = async () => {
+    let txHash = "";
+    
     try {
       if (!window.ethereum) {
-        setStatus("⚠️ No wallet found.");
+        setStatus("⚠️ No wallet found. Please install MetaMask.");
         return;
       }
+      
       if (score <= 0) {
         setStatus("⚠️ Play first before submitting!");
         return;
       }
 
-      setStatus("⏳ Sending transaction...");
+      setStatus("⏳ Preparing transaction...");
+      
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        contractABI,
-        signer
-      );
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
 
-      const tx = await contract.submitScore(score, {
-        gasLimit: 300000,
-      });
-      await tx.wait();
+      // Check cooldown
+      try {
+        const [, lastPlayed] = await contract.getMyScore();
+        const cooldownTime = await contract.COOLDOWN_TIME();
+        const currentTime = Math.floor(Date.now() / 1000);
+        
+        if (lastPlayed > 0 && currentTime < Number(lastPlayed) + Number(cooldownTime)) {
+          const remainingTime = Number(lastPlayed) + Number(cooldownTime) - currentTime;
+          const minutes = Math.floor(remainingTime / 60);
+          setStatus(`⏰ Cooldown active. Wait ${minutes} minutes.`);
+          return;
+        }
+      } catch (cooldownErr) {
+        console.log("Cooldown check skipped:", cooldownErr);
+      }
 
-      setTxHash(tx.hash);
-      setStatus("✅ Score submitted successfully!");
+      setStatus("⏳ Sending transaction...");
 
-      const [highScore] = await contract.getMyScore();
-      setOnChainScore(Number(highScore));
+      const tx = await contract.submitScore(score);
+      txHash = tx.hash;
+      
+      console.log("Transaction sent:", txHash);
+      setStatus("⏳ Waiting for confirmation...");
+
+      // Wait for transaction to be mined
+      const receipt = await tx.wait();
+      
+      // Check if transaction was successful
+      if (receipt && receipt.status === 1) {
+        console.log("Transaction confirmed:", receipt);
+        setTxHash(txHash);
+        setStatus("✅ Score submitted successfully!");
+
+        // Fetch updated score - wrap in try/catch to avoid breaking on error
+        try {
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+          const [highScore] = await contract.getMyScore();
+          setOnChainScore(Number(highScore));
+        } catch (scoreErr) {
+          console.log("Could not fetch updated score:", scoreErr);
+          // Transaction still succeeded, just couldn't fetch score
+        }
+      } else {
+        setStatus("❌ Transaction failed on blockchain");
+      }
+      
     } catch (err: any) {
-      if (err?.code === 4001) setStatus("❌ User rejected");
-      else setStatus("❌ Transaction failed");
-      console.error(err);
+      console.error("Full error object:", err);
+      
+      // If we have a transaction hash, the transaction might have succeeded
+      if (txHash) {
+        setTxHash(txHash);
+        setStatus("⚠️ Transaction sent. Check explorer for status.");
+        return;
+      }
+      
+      // Handle specific error types
+      const errorMessage = err?.message || err?.reason || String(err);
+      
+      if (err?.code === 4001 || err?.code === "ACTION_REJECTED" || errorMessage.includes("user rejected")) {
+        setStatus("❌ Transaction rejected by user");
+      } else if (errorMessage.includes("Cooldown active")) {
+        setStatus("⏰ Cooldown active. Please wait 1 hour.");
+      } else if (errorMessage.includes("insufficient funds")) {
+        setStatus("❌ Insufficient funds for gas");
+      } else if (errorMessage.includes("execution reverted")) {
+        setStatus("❌ Transaction reverted. Check score/cooldown.");
+      } else {
+        // Show a clean error message
+        const cleanError = errorMessage.substring(0, 100);
+        setStatus(`❌ Error: ${cleanError}`);
+      }
     }
   };
 
@@ -278,15 +324,15 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
       <div className="flex flex-col items-center w-full">
         <button
           onClick={submitOnChain}
-          className="w-[90vw] max-w-[600px] mt-4 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm shadow-md transition-transform transform hover:scale-105"
+          disabled={score === 0}
+          className="w-[90vw] max-w-[600px] mt-4 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm shadow-md transition-transform transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Submit On-chain
+          Submit On-chain (FREE - Gas Only)
         </button>
 
-        {/** ✅ Status Message */}
         {status && (
           <p
-            className={`mt-2 text-sm font-semibold ${
+            className={`mt-2 text-sm font-semibold text-center max-w-[600px] px-4 ${
               status.includes("✅")
                 ? "text-green-400"
                 : status.includes("❌")
@@ -294,7 +340,7 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
                 : "text-yellow-400"
             }`}
           >
-            Status: {status}
+            {status}
           </p>
         )}
       </div>

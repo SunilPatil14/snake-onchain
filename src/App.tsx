@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState , useEffect} from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import SnakeGame from "./Components/SnakeGame";
 import Leaderboard from "./Components/Leaderboard";
+import { sdk } from "@farcaster/miniapp-sdk";
 
 const App: React.FC = () => {
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -9,6 +10,18 @@ const App: React.FC = () => {
   const [status, setStatus] = useState<string>("");
   
 
+  useEffect(() => {
+  const initSDK = async () => {
+    try {
+      await sdk.actions.ready();
+      console.log("✅ SDK ready called");
+    } catch (error) {
+      console.error("SDK ready error:", error);
+    }
+  };
+  
+  initSDK();
+}, []);
 
 
   return (

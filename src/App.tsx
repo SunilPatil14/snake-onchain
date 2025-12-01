@@ -15,39 +15,26 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    const initSDK = async () => {
-      addDebug("1️⃣ Starting SDK initialization...");
-      
-      try {
-        // Dynamic import to ensure SDK is available
-        const { sdk } = await import("@farcaster/miniapp-sdk");
-        addDebug("2️⃣ SDK imported successfully");
-        
-        // Check if we're in a miniapp context
-        if (typeof window !== 'undefined') {
-          addDebug(`3️⃣ Window object exists`);
-          addDebug(`4️⃣ SDK object: ${sdk ? 'Available' : 'Not available'}`);
-        }
-
-        // Log context before calling ready
-        try {
-          const context = sdk.context;
-          addDebug(`5️⃣ SDK Context: ${JSON.stringify(context)}`);
-        } catch (e) {
-          addDebug(`5️⃣ Could not get context: ${e}`);
-        }
-
-        // Call ready() - THE CRITICAL STEP
-        addDebug("6️⃣ Calling sdk.actions.ready()...");
-        await sdk.actions.ready();
-        addDebug("7️⃣ ✅ sdk.actions.ready() completed!");
-
-      } catch (error: any) {
-        addDebug(`❌ ERROR: ${error?.message || error}`);
-        console.error("Full error:", error);
+    // Add retry logic
+const initSDK = async () => {
+  let attempts = 0;
+  const maxAttempts = 3;
+  
+  while (attempts < maxAttempts) {
+    try {
+      const { sdk } = await import("@farcaster/miniapp-sdk");
+      await sdk.actions.ready();
+      console.log("✅ Ready called successfully!");
+      break;
+    } catch (error) {
+      attempts++;
+      console.error(`Attempt ${attempts} failed:`, error);
+      if (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
-    };
-
+    }
+  }
+};
     // Call immediately
     initSDK();
   }, []);

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { ethers } from "ethers";
 import contractABI from "../SnakeOnChainABI.json";
 
-const CONTRACT_ADDRESS = "0x20774e567dC27039bb95aa4289A1636cA008Edad";
+const CONTRACT_ADDRESS = "0x9cCAF471b5495623A437a8433BE06Ee92d5A11A3";
 
 type Point = { x: number; y: number };
 type Direction = { x: number; y: number };
@@ -20,7 +20,11 @@ declare global {
   }
 }
 
-const SnakeGame: React.FC<SnakeGameProps> = ({ setOnChainScore, setTxHash, setStatus }) => {
+const SnakeGame: React.FC<SnakeGameProps> = ({
+  setOnChainScore,
+  setTxHash,
+  setStatus,
+}) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [running, setRunning] = useState(false);
   const [gameOver, setGameOver] = useState(false);
@@ -126,13 +130,23 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ setOnChainScore, setTxHash, setSt
     // Tablet
     if (tablet) {
       ctx.fillStyle = "#10b981";
-      ctx.fillRect(tablet.x * cellSize + 2, tablet.y * cellSize + 2, cellSize - 4, cellSize - 4);
+      ctx.fillRect(
+        tablet.x * cellSize + 2,
+        tablet.y * cellSize + 2,
+        cellSize - 4,
+        cellSize - 4
+      );
     }
 
     // Snake
     snake.forEach((s, i) => {
       ctx.fillStyle = i === 0 ? "#60a5fa" : "#3b82f6";
-      ctx.fillRect(s.x * cellSize + 1, s.y * cellSize + 1, cellSize - 2, cellSize - 2);
+      ctx.fillRect(
+        s.x * cellSize + 1,
+        s.y * cellSize + 1,
+        cellSize - 2,
+        cellSize - 2
+      );
     });
   }, [snake, tablet, cols, rows, cellSize]);
 
@@ -166,7 +180,8 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ setOnChainScore, setTxHash, setSt
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    let startX = 0, startY = 0;
+    let startX = 0,
+      startY = 0;
 
     const handleStart = (e: TouchEvent) => {
       const t = e.touches[0];
@@ -178,7 +193,8 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ setOnChainScore, setTxHash, setSt
       const dx = t.clientX - startX;
       const dy = t.clientY - startY;
       setDir((d) => {
-        if (Math.abs(dx) > Math.abs(dy)) return dx > 0 && d.x !== -1 ? { x: 1, y: 0 } : { x: -1, y: 0 };
+        if (Math.abs(dx) > Math.abs(dy))
+          return dx > 0 && d.x !== -1 ? { x: 1, y: 0 } : { x: -1, y: 0 };
         return dy > 0 && d.y !== -1 ? { x: 0, y: 1 } : { x: 0, y: -1 };
       });
     };
@@ -206,10 +222,13 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ setOnChainScore, setTxHash, setSt
       setStatus("⏳ Sending transaction...");
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
+      const contract = new ethers.Contract(
+        CONTRACT_ADDRESS,
+        contractABI,
+        signer
+      );
 
       const tx = await contract.submitScore(score, {
-        value: ethers.parseEther("0.00001"),
         gasLimit: 100000,
       });
       await tx.wait();
@@ -229,7 +248,10 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ setOnChainScore, setTxHash, setSt
   return (
     <div className="flex flex-col items-center justify-center w-full min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-4">
       <div className="w-[90vw] max-w-[600px] aspect-square rounded-2xl overflow-hidden border-4 border-slate-700 shadow-2xl">
-        <canvas ref={canvasRef} className="w-full h-full rounded-2xl bg-slate-900 shadow-inner touch-none" />
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full rounded-2xl bg-slate-900 shadow-inner touch-none"
+        />
       </div>
 
       <div className="flex flex-wrap gap-3 justify-center items-center mt-6">
@@ -249,7 +271,9 @@ const SnakeGame: React.FC<SnakeGameProps> = ({ setOnChainScore, setTxHash, setSt
         </button>
       </div>
 
-      <div className="text-lg font-semibold text-white mt-3">🧮 Score: {score}</div>
+      <div className="text-lg font-semibold text-white mt-3">
+        🧮 Score: {score}
+      </div>
 
       <div className="flex flex-col items-center w-full">
         <button

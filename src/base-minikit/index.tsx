@@ -4,8 +4,17 @@ import { useEffect, type ReactNode } from "react";
 
 export default function BaseMiniKitProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
-    sdk.actions.ready(); // tells Farcaster your app is ready
-  }, []);
+  const init = async () => {
+    try {
+      await sdk.actions.ready(); // ✅ Now awaited
+      console.log("✅ MiniApp ready() called");
+    } catch (error) {
+      console.error("❌ MiniApp ready() failed:", error);
+    }
+  };
+  
+  init();
+}, []);
 
   return <>{children}</>;
 }

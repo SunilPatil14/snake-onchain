@@ -12,7 +12,6 @@
     "imageUrl": "https://snake-onchain.vercel.app/hero.png",
     "buttonTitle": "Play Now",
     "splashImageUrl": "https://snake-onchain.vercel.app/splash.png",
-    "splashBackgroundColor": "#000000",
-    "webhookUrl": null
+    "splashBackgroundColor": "#000000"
   }
 }

@@ -9,7 +9,7 @@
     "name": "Snake On-Chain",
     "subtitle": "Classic Snake meets Web3",
     "description": "Play the classic Snake game and submit your high score on-chain. Compete on the global leaderboard!",
-    "screenshotUrls":"https://snake-onchain.vercel.app/screenshot.png",
+    "screenshotUrls": ["https://snake-onchain.vercel.app/screenshot.png"],
     "iconUrl": "https://snake-onchain.vercel.app/snake-logo.png",
     "homeUrl": "https://snake-onchain.vercel.app",
     "imageUrl": "https://snake-onchain.vercel.app/hero.png",

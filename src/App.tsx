@@ -47,6 +47,7 @@ const App: React.FC = () => {
           <h1 className="text-4xl font-extrabold bg-gradient-to-r from-blue-400 to-green-400 text-transparent bg-clip-text drop-shadow-lg">
             🐍 Snake On-Chain
           </h1>
+          
 
           <ConnectButton
             chainStatus="icon"
@@ -55,22 +56,33 @@ const App: React.FC = () => {
         </div>
 
         {/* Game + Leaderboard */}
+        <div>
+             {/* Status + Score */}
+       {status && (
+  <div className="text-sm text-gray-300 mt-2 text-center w-full">
+    Status: {status}
+  </div>
+)}
+
+        {onChainScore !== null && (
+          <div className="text-sm text-green-400 mt-1">
+            On-chain High Score: {onChainScore}
+          </div>
+        )}
         <div className="flex flex-col md:flex-row gap-6 justify-center items-start">
+          
           <SnakeGame
+          
             setOnChainScore={setOnChainScore}
             setTxHash={setTxHash}
             setStatus={setStatus}
           />
           <Leaderboard txHash={txHash} />
         </div>
+        </div>
+        
 
-        {/* Status + Score */}
-        {status && <div className="text-sm text-gray-300 mt-2">Status: {status}</div>}
-        {onChainScore !== null && (
-          <div className="text-sm text-green-400 mt-1">
-            On-chain High Score: {onChainScore}
-          </div>
-        )}
+       
       </div>
     </div>
   );

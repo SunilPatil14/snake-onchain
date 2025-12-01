@@ -1,14 +1,15 @@
 {
    "accountAssociation": {
     "header": "eyJmaWQiOjc0NTE1MSwidHlwZSI6ImF1dGgiLCJrZXkiOiIweDA3MzMwNTc5QUYyMUUzMTAwZURiYjQwNDhiNTE0MzMxQmQ1RjIxOTAifQ",
-    "payload": "eyJkb21haW4iOiJzbmFrZS1nYW1lLXh5ei52ZXJjZWwuYXBwIn0",
-    "signature": "CSEQQeRPb5/3/Qy95PbWEyRkVLlRph2mp+cW8eE80xluJ4cByFu9Hj0UHulHzHVKU6jaPWocHPyq2BIKwfSSIBw="
+    "payload": "eyJkb21haW4iOiJzbmFrZS1vbmNoYWluLnZlcmNlbC5hcHAifQ",
+    "signature": "rI7RimB9GzOxS3XzRx0C4C1Y+YXGPrWNdNjfXZuSyFlaoRzVma4ShXkYKhVAHzIXY61zzRSEwzlAEyiNeLp7Dhs="
   },
   "miniapp": {
     "version": "1",
     "name": "Snake On-Chain",
     "subtitle": "Classic Snake meets Web3",
     "description": "Play the classic Snake game and submit your high score on-chain. Compete on the global leaderboard!",
+    "screenshotUrls":"https://snake-onchain.vercel.app/screenshot.png",
     "iconUrl": "https://snake-onchain.vercel.app/snake-logo.png",
     "homeUrl": "https://snake-onchain.vercel.app",
     "imageUrl": "https://snake-onchain.vercel.app/hero.png",

@@ -1,36 +1,18 @@
 {
-  
   "accountAssociation": {
     "header": "eyJmaWQiOjc0NTE1MSwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweGExODM4ZGE4MDM0OERjZjBlYzM2ZEIwOUMyM2FkQjkxN0U1Nzc3MGEifQ",
-    "payload": "eyJkb21haW4iOiJzbmFrZS1nYW1lLXh5ei52ZXJjZWwuYXBwIn0",
+    "payload": "eyJkb21haW4iOiJzbmFrZS1vbmNoYWluLnZlcmNlbC5hcHAifQ",
     "signature": "nEYiaam3HzUA14tZOn4TQpwHwCyjXczo3Vk2jY9nmw4ox2/1YFWwXNK2jIU1CVAw7R+tbUOu94r57s3k4YV23Rs="
   },
-  "baseBuilder": {
-    "ownerAddress": "0x1F707eE805EF591a4a7f69E67a5A5198bd16b77e"
-  },
   "miniapp": {
-  "version": "1",
-  "name": "Snake On-Chain",
-  "subtitle": "Classic Snake on chain",
-  "description": "Play the classic Snake game built on Base. Submit your score on chain and climb the leaderboard.",
-  "homeUrl": "https://snake-onchain.vercel.app",
-  "imageUrl": "https://snake-onchain.vercel.app/hero.png",
-  "buttonTitle": "Play Now",
-  "iconUrl": "https://snake-onchain.vercel.app/snake-logo.png",
-  "splashImageUrl": "https://snake-onchain.vercel.app/splash.png",
-  "splashBackgroundColor": "#000000",
-  "webhookUrl": null,
-  "screenshotUrls": [
-    "https://snake-onchain.vercel.app/screenshot.png"
-  ],
-  "heroImageUrl": "https://snake-onchain.vercel.app/hero.png",
-  "primaryCategory": "games",
-  "tags": ["game", "onchain", "snake", "base", "miniapp"],
-  "tagline": "Play. Score. Submit. On-Chain.",
-  "ogTitle": "Snake On-Chain",
-  "ogDescription": "The timeless Snake game meets Ethereum. Submit your score to the blockchain!",
-  "ogImageUrl": "https://snake-onchain.vercel.app/hero.png",
-  "noindex": false
-}
-
+    "version": "1",
+    "name": "Snake On-Chain",
+    "iconUrl": "https://snake-onchain.vercel.app/snake-logo.png",
+    "homeUrl": "https://snake-onchain.vercel.app",
+    "imageUrl": "https://snake-onchain.vercel.app/hero.png",
+    "buttonTitle": "Play Now",
+    "splashImageUrl": "https://snake-onchain.vercel.app/splash.png",
+    "splashBackgroundColor": "#000000",
+    "webhookUrl": null
+  }
 }

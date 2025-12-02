@@ -20,55 +20,50 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ txHash }) => {
   const [totalPlayers, setTotalPlayers] = useState<number>(0);
 
   const loadLeaderboard = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Use public RPC if no wallet is connected
-      let provider;
-      if (window.ethereum) {
-        provider = new ethers.BrowserProvider(window.ethereum);
-      } else {
-        // Use Base Sepolia public RPC
-        provider = new ethers.JsonRpcProvider("https://sepolia.base.org");
-      }
-      
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, provider);
-
-      // Try the new getLeaderboard(topN) function first (if you redeployed)
-      let addresses, scores;
-      try {
-        // Get top 100 players
-        [addresses, scores] = await contract.getLeaderboard(100);
-      } catch {
-        // Fallback to old getLeaderboard() if new contract not deployed
-        [addresses, scores] = await contract.getLeaderboard();
-      }
-
-      // Try to get total players count (new function)
-      try {
-        const total = await contract.getTotalPlayers();
-        setTotalPlayers(Number(total));
-      } catch {
-        setTotalPlayers(addresses.length);
-      }
-
-      // Format and sort on frontend (in case contract doesn't sort)
-      const formatted: LeaderboardEntry[] = addresses
-        .map((addr: string, i: number) => ({
-          address: addr,
-          score: Number(scores[i]),
-        }))
-        .sort((a: LeaderboardEntry, b: LeaderboardEntry) => b.score - a.score);
-
-      setLeaderboard(formatted);
-    } catch (err: any) {
-      console.error("Error loading leaderboard:", err);
-      setError("Failed to load leaderboard");
-    } finally {
-      setLoading(false);
+  try {
+    setLoading(true);
+    setError(null);
+    
+    // Use public RPC if no wallet is connected
+    let provider;
+    if (window.ethereum) {
+      provider = new ethers.BrowserProvider(window.ethereum);
+    } else {
+      // Use Base Sepolia public RPC
+      provider = new ethers.JsonRpcProvider("https://mainnet.base.org");
     }
-  };
+    
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, provider);
+
+    // Get top 100 players - your contract requires the topN parameter
+    const [addresses, scores] = await contract.getLeaderboard(100);
+
+    // Get total players count
+    try {
+      const total = await contract.getTotalPlayers();
+      setTotalPlayers(Number(total));
+    } catch {
+      setTotalPlayers(addresses.length);
+    }
+
+    // Format leaderboard entries
+    const formatted: LeaderboardEntry[] = addresses
+      .map((addr: string, i: number) => ({
+        address: addr,
+        score: Number(scores[i]),
+      }))
+      .filter((entry: LeaderboardEntry) => entry.score > 0); // Only show players with scores
+
+    setLeaderboard(formatted);
+    
+    console.log("📊 Leaderboard loaded:", formatted.length, "players");
+  } catch (err: any) {
+    console.error("Error loading leaderboard:", err);
+    setError("Failed to load leaderboard");
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     loadLeaderboard();

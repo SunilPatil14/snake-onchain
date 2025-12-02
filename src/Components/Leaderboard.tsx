@@ -80,7 +80,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ txHash }) => {
         if (window.ethereum) {
           provider = new ethers.BrowserProvider(window.ethereum);
         } else {
-          provider = new ethers.JsonRpcProvider("https://sepolia.base.org");
+          provider = new ethers.JsonRpcProvider("https://mainnet.base.org");
         }
         
         const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, provider);

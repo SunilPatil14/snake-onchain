@@ -195,7 +195,7 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
   }, []);
 
   const submitOnChain = async () => {
-    let txHash = "";
+    let txHashLocal = "";
     
     try {
       if (!window.ethereum) {
@@ -234,10 +234,30 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
 
       setStatus("⏳ Sending transaction...");
 
-      const tx = await contract.submitScore(score);
-      txHash = tx.hash;
+      // ✅ FIX: Set explicit gas limit for Farcaster wallet compatibility
+      // Get current gas price
+      const feeData = await provider.getFeeData();
       
-      console.log("Transaction sent:", txHash);
+      // Prepare transaction with explicit parameters
+      const txParams: any = {
+        gasLimit: 200000, // Fixed gas limit that should cover most cases
+      };
+
+      // Add gas price if available (some wallets need this)
+      if (feeData.gasPrice) {
+        txParams.gasPrice = feeData.gasPrice;
+      } else if (feeData.maxFeePerGas) {
+        // EIP-1559 transaction
+        txParams.maxFeePerGas = feeData.maxFeePerGas;
+        txParams.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
+      }
+
+      console.log("Transaction params:", txParams);
+
+      const tx = await contract.submitScore(score, txParams);
+      txHashLocal = tx.hash;
+      
+      console.log("Transaction sent:", txHashLocal);
       setStatus("⏳ Waiting for confirmation...");
 
       // Wait for transaction to be mined
@@ -246,17 +266,16 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
       // Check if transaction was successful
       if (receipt && receipt.status === 1) {
         console.log("Transaction confirmed:", receipt);
-        setTxHash(txHash);
+        setTxHash(txHashLocal);
         setStatus("✅ Score submitted successfully!");
 
         // Fetch updated score - wrap in try/catch to avoid breaking on error
         try {
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+          await new Promise(resolve => setTimeout(resolve, 1500));
           const [highScore] = await contract.getMyScore();
           setOnChainScore(Number(highScore));
         } catch (scoreErr) {
           console.log("Could not fetch updated score:", scoreErr);
-          // Transaction still succeeded, just couldn't fetch score
         }
       } else {
         setStatus("❌ Transaction failed on blockchain");
@@ -266,8 +285,8 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
       console.error("Full error object:", err);
       
       // If we have a transaction hash, the transaction might have succeeded
-      if (txHash) {
-        setTxHash(txHash);
+      if (txHashLocal) {
+        setTxHash(txHashLocal);
         setStatus("⚠️ Transaction sent. Check explorer for status.");
         return;
       }
@@ -283,10 +302,12 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
         setStatus("❌ Insufficient funds for gas");
       } else if (errorMessage.includes("execution reverted")) {
         setStatus("❌ Transaction reverted. Check score/cooldown.");
+      } else if (errorMessage.includes("missing revert data") || errorMessage.includes("estimateGas")) {
+        setStatus("⚠️ Wallet incompatibility. Try increasing gas or use different wallet.");
       } else {
         // Show a clean error message
-        const cleanError = errorMessage.substring(0, 100);
-        setStatus(`❌ Error: ${cleanError}`);
+        const cleanError = errorMessage.substring(0, 80);
+        setStatus(`❌ ${cleanError}`);
       }
     }
   };

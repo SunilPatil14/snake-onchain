@@ -35,64 +35,6 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
   const [cellSize] = useState(20);
   const [cols, setCols] = useState(20);
   const [rows, setRows] = useState(20);
-  const [cooldownRemaining, setCooldownRemaining] = useState<string | null>(
-    null
-  );
-  const [canSubmit, setCanSubmit] = useState(true);
-
-  // Check cooldown status on mount and after each submission
-  useEffect(() => {
-    const checkCooldown = async () => {
-      if (!window.ethereum) return;
-
-      try {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const contract = new ethers.Contract(
-          CONTRACT_ADDRESS,
-          contractABI,
-          provider
-        );
-
-        const [, lastPlayed] = await contract.getMyScore();
-        const cooldownTime = await contract.COOLDOWN_TIME();
-        const currentTime = Math.floor(Date.now() / 1000);
-
-        if (lastPlayed > 0) {
-          const timeUntilNext =
-            Number(lastPlayed) + Number(cooldownTime) - currentTime;
-
-          if (timeUntilNext > 0) {
-            setCanSubmit(false);
-            const hours = Math.floor(timeUntilNext / 3600);
-            const minutes = Math.floor((timeUntilNext % 3600) / 60);
-            const seconds = timeUntilNext % 60;
-
-            if (hours > 0) {
-              setCooldownRemaining(`${hours}h ${minutes}m ${seconds}s`);
-            } else if (minutes > 0) {
-              setCooldownRemaining(`${minutes}m ${seconds}s`);
-            } else {
-              setCooldownRemaining(`${seconds}s`);
-            }
-          } else {
-            setCanSubmit(true);
-            setCooldownRemaining(null);
-          }
-        } else {
-          setCanSubmit(true);
-          setCooldownRemaining(null);
-        }
-      } catch (err) {
-        console.log("Cooldown check error:", err);
-        setCanSubmit(true); // Allow submission on error
-      }
-    };
-
-    checkCooldown();
-    const interval = setInterval(checkCooldown, 1000); // Update every second
-
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const resize = () => {

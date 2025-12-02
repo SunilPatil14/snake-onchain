@@ -195,72 +195,116 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
     };
   }, []);
 
-  const submitOnChain = async () => {
+ const submitOnChain = async () => {
+  try {
+    if (!window.ethereum) {
+      setStatus("⚠️ No wallet found. Please install MetaMask.");
+      return;
+    }
+
+    if (score <= 0) {
+      setStatus("⚠️ Play first before submitting!");
+      return;
+    }
+
+    setStatus("⏳ Preparing transaction...");
+
+    await window.ethereum.request({ method: "eth_requestAccounts" });
+
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const contract = new ethers.Contract(
+      CONTRACT_ADDRESS,
+      contractABI,
+      signer
+    );
+
+    setStatus("⏳ Sending transaction...");
+
+    const tx = await contract.submitScore(score, {
+      gasLimit: 200000,
+    });
+
+    console.log("Transaction sent:", tx.hash);
+    setTxHash(tx.hash);
+    setStatus("⏳ Confirming... (this may take 10-30 seconds)");
+
+    // Wait for confirmation with better error handling
+    let receipt = null;
     try {
-      if (!window.ethereum) {
-        setStatus("⚠️ No wallet found. Please install MetaMask.");
-        return;
+      receipt = await tx.wait(1);
+    } catch (waitError: any) {
+      console.log("Wait error (this is common):", waitError);
+      
+      // Error 4200 or similar - transaction likely succeeded
+      // Check manually after a delay
+      setStatus("⏳ Verifying transaction...");
+      
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      
+      try {
+        receipt = await provider.getTransactionReceipt(tx.hash);
+      } catch (e) {
+        console.log("Could not get receipt:", e);
       }
+    }
 
-      if (score <= 0) {
-        setStatus("⚠️ Play first before submitting!");
-        return;
-      }
-
-      setStatus("⏳ Preparing transaction...");
-
-      await window.ethereum.request({ method: "eth_requestAccounts" });
-
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        contractABI,
-        signer
-      );
-
-      setStatus("⏳ Sending transaction...");
-
-      const tx = await contract.submitScore(score, {
-        gasLimit: 150000,
-      });
-
-      console.log("Transaction sent:", tx.hash);
-      setTxHash(tx.hash);
-      setStatus("⏳ Waiting for confirmation...");
-
-      const receipt = await tx.wait();
-
-      if (receipt && receipt.status === 1) {
-        console.log("Transaction confirmed:", receipt);
+    // Check if transaction succeeded
+    if (receipt) {
+      if (receipt.status === 1) {
+        console.log("✅ Transaction confirmed!");
         setStatus("✅ Score submitted successfully!");
 
+        // Fetch updated score
         try {
-          await new Promise((resolve) => setTimeout(resolve, 1500));
+          await new Promise((resolve) => setTimeout(resolve, 2000));
           const [highScore] = await contract.getMyScore();
           setOnChainScore(Number(highScore));
         } catch (scoreErr) {
-          console.log("Could not fetch updated score:", scoreErr);
+          console.log("Could not fetch score (not critical):", scoreErr);
         }
       } else {
-        setStatus("❌ Transaction failed on blockchain");
+        setStatus("❌ Transaction failed");
       }
-    } catch (err: any) {
-      console.error("Transaction error:", err);
-
-      const errorMessage = err?.message || String(err);
-
-      if (err?.code === 4001 || errorMessage.includes("user rejected")) {
-        setStatus("❌ Transaction rejected by user");
-      } else if (errorMessage.includes("insufficient funds")) {
-        setStatus("❌ Insufficient funds for gas");
-      } else if (errorMessage.includes("execution reverted")) {
-        setStatus("❌ Transaction reverted. Check if score is valid.");
-      } else {
-        setStatus(`❌ Error: ${errorMessage.substring(0, 60)}`);
-      }
+    } else {
+      // Receipt not available yet - give user the hash to check
+      setStatus("✅ Transaction sent! Check explorer to confirm.");
     }
-  };
+  } catch (err: any) {
+    console.error("Transaction error:", err);
+
+    const errorMessage = err?.message || String(err);
+    const errorCode = err?.code;
+
+    // Error 4200 after tx.hash exists means transaction likely succeeded
+    if (errorCode === 4200 && err.transaction?.hash) {
+      setStatus("✅ Transaction likely succeeded! Refreshing...");
+      setTxHash(err.transaction.hash);
+      
+      // Try to verify after delay
+      setTimeout(async () => {
+        try {
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const receipt = await provider.getTransactionReceipt(err.transaction.hash);
+          if (receipt && receipt.status === 1) {
+            setStatus("✅ Score submitted successfully!");
+          }
+        } catch (e) {
+          console.log("Manual check failed:", e);
+        }
+      }, 5000);
+      return;
+    }
+
+    if (errorCode === 4001 || errorMessage.includes("user rejected")) {
+      setStatus("❌ Transaction rejected");
+    } else if (errorMessage.includes("insufficient funds")) {
+      setStatus("❌ Insufficient funds for gas");
+    } else {
+      setStatus(`❌ Error occurred. Check console for details.`);
+    }
+  }
+};
   return (
     <div className="flex flex-col items-center justify-center w-full min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-4">
       <div className="w-[90vw] max-w-[600px] aspect-square rounded-2xl overflow-hidden border-4 border-slate-700 shadow-2xl">

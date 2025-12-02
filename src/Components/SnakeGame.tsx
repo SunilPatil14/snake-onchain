@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { ethers } from "ethers";
 import contractABI from "../SnakeOnChainABI.json";
 
-const CONTRACT_ADDRESS = "0x2008c910B7BF54129ff2Fa337355428a3661c316";
+const CONTRACT_ADDRESS = "0xcC8E9a9CeBF3b3a6dd21BD79A7756E3d5f4C9061";
 
 type Point = { x: number; y: number };
 type Direction = { x: number; y: number };
@@ -35,6 +35,64 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
   const [cellSize] = useState(20);
   const [cols, setCols] = useState(20);
   const [rows, setRows] = useState(20);
+  const [cooldownRemaining, setCooldownRemaining] = useState<string | null>(
+    null
+  );
+  const [canSubmit, setCanSubmit] = useState(true);
+
+  // Check cooldown status on mount and after each submission
+  useEffect(() => {
+    const checkCooldown = async () => {
+      if (!window.ethereum) return;
+
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const contract = new ethers.Contract(
+          CONTRACT_ADDRESS,
+          contractABI,
+          provider
+        );
+
+        const [, lastPlayed] = await contract.getMyScore();
+        const cooldownTime = await contract.COOLDOWN_TIME();
+        const currentTime = Math.floor(Date.now() / 1000);
+
+        if (lastPlayed > 0) {
+          const timeUntilNext =
+            Number(lastPlayed) + Number(cooldownTime) - currentTime;
+
+          if (timeUntilNext > 0) {
+            setCanSubmit(false);
+            const hours = Math.floor(timeUntilNext / 3600);
+            const minutes = Math.floor((timeUntilNext % 3600) / 60);
+            const seconds = timeUntilNext % 60;
+
+            if (hours > 0) {
+              setCooldownRemaining(`${hours}h ${minutes}m ${seconds}s`);
+            } else if (minutes > 0) {
+              setCooldownRemaining(`${minutes}m ${seconds}s`);
+            } else {
+              setCooldownRemaining(`${seconds}s`);
+            }
+          } else {
+            setCanSubmit(true);
+            setCooldownRemaining(null);
+          }
+        } else {
+          setCanSubmit(true);
+          setCooldownRemaining(null);
+        }
+      } catch (err) {
+        console.log("Cooldown check error:", err);
+        setCanSubmit(true); // Allow submission on error
+      }
+    };
+
+    checkCooldown();
+    const interval = setInterval(checkCooldown, 1000); // Update every second
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const resize = () => {
@@ -168,7 +226,8 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    let startX = 0, startY = 0;
+    let startX = 0,
+      startY = 0;
 
     const handleStart = (e: TouchEvent) => {
       const t = e.touches[0];
@@ -195,83 +254,47 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
   }, []);
 
   const submitOnChain = async () => {
-    let txHashLocal = "";
-    
     try {
       if (!window.ethereum) {
         setStatus("⚠️ No wallet found. Please install MetaMask.");
         return;
       }
-      
+
       if (score <= 0) {
         setStatus("⚠️ Play first before submitting!");
         return;
       }
 
       setStatus("⏳ Preparing transaction...");
-      
-      await window.ethereum.request({ method: 'eth_requestAccounts' });
-      
+
+      await window.ethereum.request({ method: "eth_requestAccounts" });
+
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
-
-      // Check cooldown
-      try {
-        const [, lastPlayed] = await contract.getMyScore();
-        const cooldownTime = await contract.COOLDOWN_TIME();
-        const currentTime = Math.floor(Date.now() / 1000);
-        
-        if (lastPlayed > 0 && currentTime < Number(lastPlayed) + Number(cooldownTime)) {
-          const remainingTime = Number(lastPlayed) + Number(cooldownTime) - currentTime;
-          const minutes = Math.floor(remainingTime / 60);
-          setStatus(`⏰ Cooldown active. Wait ${minutes} minutes.`);
-          return;
-        }
-      } catch (cooldownErr) {
-        console.log("Cooldown check skipped:", cooldownErr);
-      }
+      const contract = new ethers.Contract(
+        CONTRACT_ADDRESS,
+        contractABI,
+        signer
+      );
 
       setStatus("⏳ Sending transaction...");
 
-      // ✅ FIX: Set explicit gas limit for Farcaster wallet compatibility
-      // Get current gas price
-      const feeData = await provider.getFeeData();
-      
-      // Prepare transaction with explicit parameters
-      const txParams: any = {
-        gasLimit: 200000, // Fixed gas limit that should cover most cases
-      };
+      const tx = await contract.submitScore(score, {
+        gasLimit: 150000,
+      });
 
-      // Add gas price if available (some wallets need this)
-      if (feeData.gasPrice) {
-        txParams.gasPrice = feeData.gasPrice;
-      } else if (feeData.maxFeePerGas) {
-        // EIP-1559 transaction
-        txParams.maxFeePerGas = feeData.maxFeePerGas;
-        txParams.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
-      }
-
-      console.log("Transaction params:", txParams);
-
-      const tx = await contract.submitScore(score, txParams);
-      txHashLocal = tx.hash;
-      
-      console.log("Transaction sent:", txHashLocal);
+      console.log("Transaction sent:", tx.hash);
+      setTxHash(tx.hash);
       setStatus("⏳ Waiting for confirmation...");
 
-      // Wait for transaction to be mined
       const receipt = await tx.wait();
-      
-      // Check if transaction was successful
+
       if (receipt && receipt.status === 1) {
         console.log("Transaction confirmed:", receipt);
-        setTxHash(txHashLocal);
         setStatus("✅ Score submitted successfully!");
 
-        // Fetch updated score - wrap in try/catch to avoid breaking on error
         try {
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          await new Promise((resolve) => setTimeout(resolve, 1500));
           const [highScore] = await contract.getMyScore();
           setOnChainScore(Number(highScore));
         } catch (scoreErr) {
@@ -280,38 +303,22 @@ const SnakeGame: React.FC<SnakeGameProps> = ({
       } else {
         setStatus("❌ Transaction failed on blockchain");
       }
-      
     } catch (err: any) {
-      console.error("Full error object:", err);
-      
-      // If we have a transaction hash, the transaction might have succeeded
-      if (txHashLocal) {
-        setTxHash(txHashLocal);
-        setStatus("⚠️ Transaction sent. Check explorer for status.");
-        return;
-      }
-      
-      // Handle specific error types
-      const errorMessage = err?.message || err?.reason || String(err);
-      
-      if (err?.code === 4001 || err?.code === "ACTION_REJECTED" || errorMessage.includes("user rejected")) {
+      console.error("Transaction error:", err);
+
+      const errorMessage = err?.message || String(err);
+
+      if (err?.code === 4001 || errorMessage.includes("user rejected")) {
         setStatus("❌ Transaction rejected by user");
-      } else if (errorMessage.includes("Cooldown active")) {
-        setStatus("⏰ Cooldown active. Please wait 1 hour.");
       } else if (errorMessage.includes("insufficient funds")) {
         setStatus("❌ Insufficient funds for gas");
       } else if (errorMessage.includes("execution reverted")) {
-        setStatus("❌ Transaction reverted. Check score/cooldown.");
-      } else if (errorMessage.includes("missing revert data") || errorMessage.includes("estimateGas")) {
-        setStatus("⚠️ Wallet incompatibility. Try increasing gas or use different wallet.");
+        setStatus("❌ Transaction reverted. Check if score is valid.");
       } else {
-        // Show a clean error message
-        const cleanError = errorMessage.substring(0, 80);
-        setStatus(`❌ ${cleanError}`);
+        setStatus(`❌ Error: ${errorMessage.substring(0, 60)}`);
       }
     }
   };
-
   return (
     <div className="flex flex-col items-center justify-center w-full min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-4">
       <div className="w-[90vw] max-w-[600px] aspect-square rounded-2xl overflow-hidden border-4 border-slate-700 shadow-2xl">

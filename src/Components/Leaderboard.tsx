@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import contractABI from "../SnakeOnChainABI.json";
 
-const CONTRACT_ADDRESS = "0x2008c910B7BF54129ff2Fa337355428a3661c316";
+const CONTRACT_ADDRESS = "0xcC8E9a9CeBF3b3a6dd21BD79A7756E3d5f4C9061";
 
 interface LeaderboardEntry {
   address: string;
